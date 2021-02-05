@@ -46,9 +46,6 @@
 #' @param verbose logical indicating whether to print verbose output.
 #' @param ... additional arguments are ignored.
 #'
-#' @examples
-#' hg19.sizes.txt
-#'
 #' @export
 peak_feature_ranged_counter <- function
 (peaksL=NULL,

@@ -76,7 +76,3 @@ while progressively expanding the peak width.
 It also tabulates counts by feature category, using
 the feature annotations in \code{category_colname}.
 }
-\examples{
-hg19.sizes.txt
-
-}
