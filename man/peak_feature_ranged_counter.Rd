@@ -59,9 +59,8 @@ use \code{expand_factor=2} when this distance should represent
 distance from the peak in either direction, for which the
 peaks are expanded from center by this distance.}
 
-\item{do_random}{logical indicating whether to choose
-random peaks from \code{randomsL} using the same number of
-peaks as the corresponding entry in \code{peaksL}.}
+\item{do_random}{\code{logical} indicating whether the test being
+performed represents a random permutation.}
 
 \item{verbose}{logical indicating whether to print verbose output.}
 

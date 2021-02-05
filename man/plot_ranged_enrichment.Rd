@@ -15,7 +15,7 @@ plot_ranged_enrichment(
   fill_sub = color_sub,
   facet_formula = Experiment ~ PeakSet,
   shape_sub = c(higher = 24, lower = 25),
-  alpha_sub = c(Test = 1, Random = 0.075),
+  alpha_sub = c(Test = 1, Random = 0.05),
   y_include = c(0, 10),
   x_include = c(5),
   test_cat_title = "Category",

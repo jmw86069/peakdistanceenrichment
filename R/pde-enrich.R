@@ -43,6 +43,8 @@
 #'    use `expand_factor=2` when this distance should represent
 #'    distance from the peak in either direction, for which the
 #'    peaks are expanded from center by this distance.
+#' @param do_random `logical` indicating whether the test being
+#'    performed represents a random permutation.
 #' @param verbose logical indicating whether to print verbose output.
 #' @param ... additional arguments are ignored.
 #'
@@ -149,7 +151,7 @@ peak_feature_ranged_counter <- function
    ##   -
    atacRangesL <- lapply(Experiments, function(Experiment){
       if (verbose) {
-         printDebug("peak_feature_enrich(): ",
+         jamba::printDebug("peak_feature_enrich(): ",
             "Processing Experiment:", Experiment);
       }
       bedL <- peaksL[[Experiment]];
@@ -167,7 +169,7 @@ peak_feature_ranged_counter <- function
          iGR <- bedL[[PeakSet]];
          ## Optionally create random peaks
          if (do_random) {
-            if ("list" %in% class(featuresL[[Experiment]])) {
+            if ("list" %in% class(randomsL[[Experiment]])) {
                randomGR <- randomsL[[Experiment]][[PeakSet]];
             } else {
                randomGR <- randomsL[[Experiment]];
@@ -307,7 +309,7 @@ peak_feature_ranged_enrichment <- function
       names(test_cats) <- jamba::cPaste(test_cats);
    }
    if (verbose) {
-      printDebug("peak_feature_ranged_enrichment(): ",
+      jamba::printDebug("peak_feature_ranged_enrichment(): ",
          "test_cats:");
       print(test_cats);
    }
@@ -334,7 +336,7 @@ peak_feature_ranged_enrichment <- function
       drawn0 <- setdiff(all_cats, drawn1);
       undrawn0 <- paste0(drawn0, "_non");
       if (verbose) {
-         printDebug("peak_feature_ranged_enrichment(): ",
+         jamba::printDebug("peak_feature_ranged_enrichment(): ",
             "drawn1:",drawn1,
             ", drawn0:", drawn0,
             ", undrawn1:", undrawn1,
@@ -499,7 +501,7 @@ plot_ranged_enrichment <- function
  fill_sub=color_sub,
  facet_formula=Experiment~PeakSet,
  shape_sub=c(`higher`=24, `lower`=25),
- alpha_sub=c(`Test`=1, `Random`=0.075),
+ alpha_sub=c(`Test`=1, `Random`=0.05),
  y_include=c(0,10),
  x_include=c(5),
  test_cat_title="Category",

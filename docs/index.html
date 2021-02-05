@@ -184,8 +184,12 @@
    peaksL<span class="op">=</span><span class="va">peaksL</span>,
    featuresL<span class="op">=</span><span class="va">tssL</span>,
    expand_range_kb<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">2000</span><span class="op">)</span>,
-   verbose<span class="op">=</span><span class="cn">FALSE</span>,
-   category_colname<span class="op">=</span><span class="st">"hit"</span><span class="op">)</span>;</pre></div>
+   verbose<span class="op">=</span><span class="cn">TRUE</span>,
+   category_colname<span class="op">=</span><span class="st">"hit"</span><span class="op">)</span>;
+<span class="co">#&gt; ##  (16:55:56) 05Feb2021:  peak_feature_ranged_counter(): cat_levels:-1,0,1 </span>
+<span class="co">#&gt; ##  (16:55:56) 05Feb2021:  peak_feature_enrich(): Processing Experiment:steadystate </span>
+<span class="co">#&gt; ##  (16:55:56) 05Feb2021:  peak_feature_enrich():       Processing PeakSet:higher, length(PeakSet):3121, length(featuresGR):17462 </span>
+<span class="co">#&gt; ##  (16:55:59) 05Feb2021:  peak_feature_enrich():       Processing PeakSet:lower, length(PeakSet):4186, length(featuresGR):17462</span></pre></div>
 <p>The counts are tested with hypergeometric enrichment, to test each category, for each set of peaks, and at each distance. The output is a <code>data.frame</code> that include the hypergeometric P-value in column <code>"phyper.p"</code>. It also includes the values passed to <code><a href="https://rdrr.io/r/stats/Hypergeometric.html">phyper()</a></code>, specific the <code>q, m, n, k</code> values.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit">
 <span class="va">paramsDF</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/peak_feature_ranged_enrichment.html">peak_feature_ranged_enrichment</a></span><span class="op">(</span><span class="va">range_counts</span>,
@@ -211,7 +215,8 @@
 <span class="va">gg_pre</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/plot_ranged_enrichment.html">plot_ranged_enrichment</a></span><span class="op">(</span><span class="va">paramsDF</span>,
    test_cat_title<span class="op">=</span><span class="st">"RNAseq\ndirection"</span>,
    draw_points<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span>
-   <span class="fu">scale_x_log10</span><span class="op">(</span><span class="op">)</span>
+   <span class="fu">scale_x_log10</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span>
+   <span class="fu">annotation_logticks</span><span class="op">(</span>sides<span class="op">=</span><span class="st">"b"</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">gg_pre</span><span class="op">)</span></pre></div>
 <p><img src="reference/figures/README-plot_enrichment-1.png"><!-- --></p>
 <p>If you want to update the category labels, you can do something like this:</p>
@@ -238,6 +243,92 @@
    <span class="fu">facet_grid</span><span class="op">(</span><span class="va">Subclass</span><span class="op">~</span><span class="va">Experiment</span><span class="op">+</span><span class="va">PeakSet</span><span class="op">)</span>
 <span class="va">gg_prc</span></pre></div>
 <p><img src="reference/figures/README-plot_range_counts-1.png"><!-- --></p>
+</div>
+<div id="random-permutations" class="section level2">
+<h2 class="hasAnchor">
+<a href="#random-permutations" class="anchor"></a>Random permutations</h2>
+<p>After receiving a very helpful reviewer request, we implemented analysis steps to test enrichment of random ATACseq peaks, to ensure that our observed enrichment tests were substantially different than what one would observe from using any random locations in the genome.</p>
+<p>The strategy was to take the full set of ATACseq peaks that were tested for differential changes, and randomize the results of that test. This approach was preferred instead of generating fully random locations in the hg19 human genome, because ATACseq peaks are known to have a bias toward active gene promoter regions, and other particular areas of genome function. We wanted to test enrichment using random peaks that have the same bias that one would expect from a set of ATACseq peaks in the cell type being studied.</p>
+<p>An alternative approach that we did not implement, might be to randomize the RNAseq “category values” across the RNAseq features. Ultimately the two approaches should address the same question, and in largely similar ways, yielding the same result.</p>
+<p>First, import the full set of ATACseq peaks tested, which includes 163,782 regions in the genome.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit">
+<span class="co"># BAF47KD_steadystate_tested_peaks.bed</span>
+<span class="va">randombed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,
+   <span class="st">"BAF47KD_steadystate_tested_peaks.bed"</span>,
+   package<span class="op">=</span><span class="st">"peakdistanceenrichment"</span><span class="op">)</span>;
+<span class="va">randomdf</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://Rdatatable.gitlab.io/data.table/reference/fread.html">fread</a></span><span class="op">(</span><span class="va">randombed</span>, data.table<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">randomdf</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"seqnames"</span>, <span class="st">"start"</span>, <span class="st">"end"</span><span class="op">)</span>;
+<span class="va">randomgr</span> <span class="op">&lt;-</span> <span class="fu">as</span><span class="op">(</span><span class="va">randomdf</span>, <span class="st">"GRanges"</span><span class="op">)</span>
+<span class="fu">seqinfo</span><span class="op">(</span><span class="va">randomgr</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">hg19seqinfo</span>;
+<span class="va">randomsL</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="op">)</span>
+<span class="va">randomsL</span><span class="op">$</span><span class="va">steadystate</span> <span class="op">&lt;-</span> <span class="va">randomgr</span>;</pre></div>
+<p>Next, call <code><a href="reference/peak_feature_ranged_counter.html">peak_feature_ranged_counter()</a></code> 100 times and add the argument <code>randomsL</code> which supplies the set of peaks from which random peaks will be chosen. This way, the number of random peaks will be equal to the number of test peaks.</p>
+<p>Note for this scenario, <code>expand_kb</code> is defined to have fewer random distances, to decrease the time required.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit">
+<span class="co">## generate 100 different random subsets of ATAC peaks</span>
+<span class="va">expand_kb</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_expanded_ranges.html">get_expanded_ranges</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">3000</span><span class="op">)</span><span class="op">)</span>;
+<span class="va">n_iter</span> <span class="op">&lt;-</span> <span class="fl">100</span>;
+<span class="va">random_counts_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq_len</a></span><span class="op">(</span><span class="va">n_iter</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">{</span>
+   <span class="kw">if</span> <span class="op">(</span><span class="op">(</span><span class="va">n</span> <span class="op">/</span> <span class="fl">10</span><span class="op">)</span> <span class="op">%%</span> <span class="fl">1</span> <span class="op">==</span> <span class="fl">0</span> <span class="op">||</span> <span class="va">n</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span> <span class="op">{</span>
+      <span class="fu">jamba</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/jamba/man/printDebug.html">printDebug</a></span><span class="op">(</span><span class="st">"Iteration:"</span>, <span class="va">n</span><span class="op">)</span>;
+   <span class="op">}</span>
+   <span class="va">random_range_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/peak_feature_ranged_counter.html">peak_feature_ranged_counter</a></span><span class="op">(</span>peaksL<span class="op">=</span><span class="va">peaksL</span>,
+      featuresL<span class="op">=</span><span class="va">tssL</span>,
+      randomsL<span class="op">=</span><span class="va">randomsL</span>,
+      do_random<span class="op">=</span><span class="cn">TRUE</span>,
+      expand_kb<span class="op">=</span><span class="va">expand_kb</span>,
+      verbose<span class="op">=</span><span class="cn">FALSE</span>,
+      category_colname<span class="op">=</span><span class="st">"hit"</span><span class="op">)</span>;
+   <span class="co">#plot_ranged_counts(random_range_counts, dir_colors);</span>
+   <span class="va">random_range_counts</span>;
+<span class="op">}</span><span class="op">)</span>;
+<span class="co">#&gt; ##  (16:56:03) 05Feb2021:  Iteration:1 </span>
+<span class="co">#&gt; ##  (16:56:11) 05Feb2021:  Iteration:10 </span>
+<span class="co">#&gt; ##  (16:56:20) 05Feb2021:  Iteration:20 </span>
+<span class="co">#&gt; ##  (16:56:29) 05Feb2021:  Iteration:30 </span>
+<span class="co">#&gt; ##  (16:56:38) 05Feb2021:  Iteration:40 </span>
+<span class="co">#&gt; ##  (16:56:47) 05Feb2021:  Iteration:50 </span>
+<span class="co">#&gt; ##  (16:56:56) 05Feb2021:  Iteration:60 </span>
+<span class="co">#&gt; ##  (16:57:05) 05Feb2021:  Iteration:70 </span>
+<span class="co">#&gt; ##  (16:57:14) 05Feb2021:  Iteration:80 </span>
+<span class="co">#&gt; ##  (16:57:23) 05Feb2021:  Iteration:90 </span>
+<span class="co">#&gt; ##  (16:57:32) 05Feb2021:  Iteration:100</span></pre></div>
+<p>Next we combine the random count results with the previous test results. Note that each iteration must be numbered in order for the line plots to be properly connected.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit">
+<span class="co">## combine with real test data already calculated</span>
+<span class="va">all_range_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html">rbind</a></span><span class="op">(</span><span class="va">range_counts</span>,
+   <span class="fu">jamba</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/jamba/man/rbindList.html">rbindList</a></span><span class="op">(</span><span class="va">random_counts_list</span><span class="op">)</span><span class="op">)</span>;
+<span class="co">## Assign iteration numbers so lines can be drawn appropriately</span>
+<span class="va">all_range_counts</span><span class="op">$</span><span class="va">Iteration</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span>from<span class="op">=</span><span class="fl">0</span>, to<span class="op">=</span><span class="va">n_iter</span><span class="op">)</span>,
+   <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">range_counts</span><span class="op">)</span>,
+      <span class="fu">jamba</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/jamba/man/sdim.html">sdim</a></span><span class="op">(</span><span class="va">random_counts_list</span><span class="op">)</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>;
+<span class="co">## Define the "Test" from "Random" data</span>
+<span class="va">all_range_counts</span><span class="op">$</span><span class="va">Test</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Test"</span>, <span class="st">"Random"</span><span class="op">)</span>,
+   <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">range_counts</span><span class="op">)</span>,
+      <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="fu">jamba</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/jamba/man/sdim.html">sdim</a></span><span class="op">(</span><span class="va">random_counts_list</span><span class="op">)</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>;</pre></div>
+<p>Finally we perform hypergeometric tests, then plot the results using alpha transparency for the random permutation results.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit">
+<span class="co">## Hypergeometric enrichment</span>
+<span class="va">all_paramsDF</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/peak_feature_ranged_enrichment.html">peak_feature_ranged_enrichment</a></span><span class="op">(</span><span class="va">all_range_counts</span>,
+   test_cats<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"1"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"0"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"-1"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"-1"</span>,<span class="st">"1"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>;
+
+<span class="va">gg_all_enrich</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/plot_ranged_enrichment.html">plot_ranged_enrichment</a></span><span class="op">(</span>
+   <span class="fu"><a href="https://rdrr.io/r/base/subset.html">subset</a></span><span class="op">(</span><span class="va">all_paramsDF</span>, <span class="va">q_drawn1</span> <span class="op">&lt;</span> <span class="va">m_drawn1_undrawn1</span><span class="op">)</span>,
+   PeakSet_title<span class="op">=</span><span class="st">"ATAC change"</span>,
+   draw_points<span class="op">=</span><span class="cn">FALSE</span>,
+   x_include<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">2000</span><span class="op">)</span>,
+   alpha_sub<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>`Test`<span class="op">=</span><span class="fl">1</span>, `Random`<span class="op">=</span><span class="fl">0.05</span><span class="op">)</span>,
+   test_cat_title<span class="op">=</span><span class="st">"RNAseq change"</span><span class="op">)</span> <span class="op">+</span>
+   <span class="fu">scale_x_log10</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span>
+   <span class="fu">annotation_logticks</span><span class="op">(</span>sides<span class="op">=</span><span class="st">"b"</span><span class="op">)</span>
+
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">gg_all_enrich</span><span class="op">)</span></pre></div>
+<p><img src="reference/figures/README-phyper_random-1.png"><!-- --></p>
+<p>For this purpose, I prefer to look at each panel separately, as shown below.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">gg_all_enrich</span> <span class="op">+</span>
+   <span class="fu">facet_grid</span><span class="op">(</span><span class="va">PeakSet</span><span class="op">~</span><span class="va">Experiment</span><span class="op">+</span><span class="va">test_cat</span><span class="op">)</span><span class="op">)</span></pre></div>
+<p><img src="reference/figures/README-plot_random_panels-1.png"><!-- --></p>
 </div>
 </div>
   </div>
