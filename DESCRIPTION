@@ -1,0 +1,29 @@
+Package: peakdistanceenrichment
+Title: ATACseq or ChIPseq peak enrichment using a sliding distance
+Version: 0.0.0.9000
+Authors@R: c(
+    person(given="James M.",
+       family="Ward",
+       email="jmw86069@gmail.com",
+       comment=c(ORCID="0000-0002-9510-2848"),
+       role=c("aut", "cre")))
+Maintainer: James M. Ward <jmw86069@gmail.com>
+Description: Test ATACseq or ChIPseq genome regions (peaks) by
+   hypergeometric enrichment with a set of genome features, 
+   iterated across a sliding range of distances.
+License: GPL-2
+Depends: R (>= 3.6.0)
+biocViews:
+Imports: jamba(>= 0.0.56.900),
+    colorjam(>= 0.0.18.900),
+    GenomicRanges,
+    data.table
+Encoding: UTF-8
+LazyData: true
+Remotes: github::jmw86069/jamba,
+    github::jmw86069/colorjam
+URL: http://github.com/jmw86069/peakdistanceenrichment
+BugReports: http://github.com/jmw86069/peakdistanceenrichment/issues
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.0.2
+VignetteBuilder: knitr
